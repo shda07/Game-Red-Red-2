@@ -3,134 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Game Catch the Star</title>
+    <title>Quiz Interaktif: Detoks HP</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+        .quiz-card {
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        /* Animasi Getar saat Salah */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake-anim {
+            animation: shake 0.4s ease-in-out;
+            border-color: #ef4444 !important;
+        }
+        /* Animasi Memantul saat Benar */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+        .pop-anim {
+            animation: pop 0.4s ease-out;
+            border-color: #22c55e !important;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #0f172a;
+            padding: 10px 15px;
+            border-radius: 12px;
+        }
+        .avatar-box {
+            text-align: center;
+            margin: 10px 0 15px;
+        }
+        .avatar {
+            font-size: 60px;
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+        .question-text {
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 18px;
+            text-align: center;
+            color: #e2e8f0;
+        }
+        .options-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #1a1a2e;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            gap: 10px;
         }
-        h1 {
-            margin-bottom: 5px;
-            font-size: 24px;
-            color: #e94560;
-        }
-        #score-board {
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-        #game-area {
-            width: 320px;
-            height: 400px;
-            background-color: #16213e;
-            border: 3px solid #0f3460;
+        .option-btn {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 2px solid transparent;
+            padding: 13px 15px;
             border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        }
-        #star {
-            width: 40px;
-            height: 40px;
-            background-color: #ffd700;
-            border-radius: 50%;
-            position: absolute;
+            font-size: 14px;
+            text-align: left;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            user-select: none;
-            transition: transform 0.1s;
-            box-shadow: 0 0 15px #ffd700;
+            transition: all 0.2s;
         }
-        #star:active {
-            transform: scale(0.85);
+        .option-btn:hover:not(:disabled) {
+            background-color: #475569;
+            transform: translateY(-2px);
         }
-        button {
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+        .option-btn.correct {
+            background-color: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+            color: #86efac;
+        }
+        .option-btn.wrong {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #fca5a5;
+        }
+        /* Kotak Akibat / Konsekuensi */
+        .consequence-box {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.4;
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .consequence-good {
+            background-color: rgba(34, 197, 94, 0.15);
+            border-left: 4px solid #22c55e;
+            color: #dcfce7;
+        }
+        .consequence-bad {
+            background-color: rgba(239, 68, 68, 0.15);
+            border-left: 4px solid #ef4444;
+            color: #fee2e2;
+        }
+        .next-btn {
             margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #e94560;
+            width: 100%;
+            padding: 12px;
+            background-color: #e43f5a;
             color: white;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: bold;
+            cursor: pointer;
+            display: none;
         }
-        button:hover {
-            background-color: #c7364f;
+        .next-btn:hover {
+            background-color: #c22542;
+        }
+        /* Partikel Konfeti Sederhana */
+        .particle {
+            position: absolute;
+            font-size: 20px;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
         }
     </style>
 </head>
 <body>
 
-    <h1>Tangkap Bintang!</h1>
-    <div id="score-board">Skor: <span id="score">0</span> | Waktu: <span id="time">30</span>s</div>
-    
-    <div id="game-area">
-        <div id="star" onclick="catchStar()">⭐</div>
+<div class="quiz-card" id="card">
+    <div class="status-bar">
+        <span>Soal: <span id="q-num">1</span>/<span id="q-total">5</span></span>
+        <span>Energi Fokus: <span id="health">❤️❤️❤️</span></span>
+        <span>Skor: <span id="score">0</span></span>
     </div>
 
-    <button onclick="startGame()">Mulai / Ulangi</button>
+    <div class="avatar-box">
+        <div class="avatar" id="avatar">🤔</div>
+    </div>
 
-    <script>
-        let score = 0;
-        let timeLeft = 30;
-        let gameInterval;
-        let moveInterval;
-        let isPlaying = false;
+    <div id="quiz-content">
+        <div class="question-text" id="question">Memuat pertanyaan...</div>
+        <div class="options-list" id="options"></div>
+        <div class="consequence-box" id="consequence"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Lanjut ➡️</button>
+    </div>
+</div>
 
-        const star = document.getElementById('star');
-        const gameArea = document.getElementById('game-area');
-        const scoreDisplay = document.getElementById('score');
-        const timeDisplay = document.getElementById('time');
+<script>
+    const questions = [
+        {
+            q: "Sudah jam 11 malam, besok ada ulangan jam 7 pagi, tapi FYP TikTok lagi seru banget. Apa tindakanmu?",
+            options: [
+                {
+                    text: "Scroll 5 menit lagi aja (ujung-ujungnya 2 jam)",
+                    isCorrect: false,
+                    effect: "⚠️ AKIBAT: Kamu baru tidur jam 1 pagi! Besoknya otak sulit berkonsentrasi, mata perih, dan nilai ulangan terancam turun karena kurang tidur."
+                },
+                {
+                    text: "Aktifkan mode tidur, taruh HP jauh dari kasur, lalu tidur",
+                    isCorrect: true,
+                    effect: "✨ AKIBAT: Tidurmu berkualitas selama 7-8 jam. Bangun pagi terasa segar dan otak siap mengerjakan ulangan dengan maksimal!"
+                }
+            ]
+        },
+        {
+            q: "Lagi nongkrong bareng teman-teman di kafe, tiba-tiba grup chat ramai bahas gosip baru. Kamu bakal...",
+            options: [
+                {
+                    text: "Silent HP dan fokus ngobrol langsung sama teman di depan mata",
+                    isCorrect: true,
+                    effect: "✨ AKIBAT: Hubungan pertemanan makin akrab dan obrolan jadi seru. Kamu terhindar dari kebiasaan 'phubbing' (mengabaikan orang sekitar demi HP)."
+                },
+                {
+                    text: "Nunduk terus balas chat sambil sesekali bilang 'iya, oh gitu' ke teman",
+                    isCorrect: false,
+                    effect: "⚠️ AKIBAT: Teman-temanmu merasa tidak dihargai dan malas mengajakmu nongkrong lagi di lain waktu."
+                }
+            ]
+        },
+        {
+            q: "Baru bangun tidur pagi, mata masih setengah terbuka. Hal pertama yang kamu lakukan adalah...",
+            options: [
+                {
+                    text: "Langsung cek notifikasi medsos sambil tiduran 30 menit",
+                    isCorrect: false,
+                    effect: "⚠️ AKIBAT: Otak langsung dibanjiri dopamin instan dan informasi berlebih. Kamu jadi malas beranjak dari kasur dan berisiko telat berangkat sekolah!"
+                },
+                {
+                    text: "Minum air putih, rapikan tempat tidur, dan peregangan ringan",
+                    isCorrect: true,
+                    effect: "✨ AKIBAT: Metabolisme tubuh aktif lebih cepat, pikiran lebih tenang, dan harimu dimulai dengan produktif."
+                }
+            ]
+        },
+        {
+            q: "Lagi ngerjain tugas kelompok yang deadline-nya besok, tiba-tiba ada notif game favorit ngajak mabar.",
+            options: [
+                {
+                    text: "Bilang ke tim 'bentar 1 match doang', padahal keterusan",
+                    isCorrect: false,
+                    effect: "⚠️ AKIBAT: Tugas terbengkalai, teman kelompok kesal karena harus menanggung bagianmu, dan kamu panik begadang."
+                },
+                {
+                    text: "Matikan notifikasi game sementara sampai tugas selesai",
+                    isCorrect: true,
+                    effect: "✨ AKIBAT: Tugas selesai tepat waktu tanpa panik, dan setelah itu kamu bisa main game dengan tenang tanpa rasa bersalah!"
+                }
+            ]
+        },
+        {
+            q: "Mata mulai terasa pegal dan berair setelah menatap layar HP selama 3 jam non-stop.",
+            options: [
+                {
+                    text: "Tetap lanjut main sambil tiduran miring di ruangan gelap",
+                    isCorrect: false,
+                    effect: "⚠️ AKIBAT: Risiko mata minus/silinder meningkat drastis dan kepala terasa pusing akibat paparan sinar biru berlebih."
+                },
+                {
+                    text: "Terapkan aturan 20-20-20 (istirahatkan mata, lihat objek jauh)",
+                    isCorrect: true,
+                    effect: "✨ AKIBAT: Otot mata kembali rileks, penglihatan tetap terjaga, dan kesehatan mata terlindungi."
+                }
+            ]
+        }
+    ];
 
-        function moveStar() {
-            const maxX = gameArea.clientWidth - star.clientWidth;
-            const maxY = gameArea.clientHeight - star.clientHeight;
-            
-            const randomX = Math.floor(Math.random() * maxX);
-            const randomY = Math.floor(Math.random() * maxY);
-            
-            star.style.left = randomX + 'px';
-            star.style.top = randomY + 'px';
+    let currentIdx = 0;
+    let score = 0;
+    let lives = 3;
+
+    const card = document.getElementById('card');
+    const qNumEl = document.getElementById('q-num');
+    const qTotalEl = document.getElementById('q-total');
+    const healthEl = document.getElementById('health');
+    const scoreEl = document.getElementById('score');
+    const avatarEl = document.getElementById('avatar');
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const consequenceEl = document.getElementById('consequence');
+    const nextBtn = document.getElementById('next-btn');
+
+    qTotalEl.textContent = questions.length;
+
+    function loadQuestion() {
+        card.classList.remove('shake-anim', 'pop-anim');
+        consequenceEl.style.display = 'none';
+        nextBtn.style.display = 'none';
+        avatarEl.textContent = '🤔';
+
+        const currentQ = questions[currentIdx];
+        qNumEl.textContent = currentIdx + 1;
+        questionEl.textContent = currentQ.q;
+        optionsEl.innerHTML = '';
+
+        currentQ.options.forEach((opt) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt.text;
+            btn.onclick = () => selectAnswer(btn, opt);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(selectedBtn, opt) {
+        // Nonaktifkan semua tombol setelah memilih
+        const allBtns = optionsEl.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        // Hapus animasi sebelumnya lalu picu ulang
+        card.classList.remove('shake-anim', 'pop-anim');
+        void card.offsetWidth; 
+
+        if (opt.isCorrect) {
+            selectedBtn.classList.add('correct');
+            card.classList.add('pop-anim');
+            avatarEl.textContent = '🥳';
+            score += 20;
+            scoreEl.textContent = score;
+            consequenceEl.className = 'consequence-box consequence-good';
+            spawnParticles('✨');
+        } else {
+            selectedBtn.classList.add('wrong');
+            card.classList.add('shake-anim');
+            avatarEl.textContent = '😵‍💫';
+            lives--;
+            updateLives();
+            consequenceEl.className = 'consequence-box consequence-bad';
+            spawnParticles('💥');
         }
 
-        function catchStar() {
-            if (!isPlaying) return;
-            score++;
-            scoreDisplay.textContent = score;
-            moveStar();
+        consequenceEl.textContent = opt.effect;
+        consequenceEl.style.display = 'block';
+        nextBtn.style.display = 'block';
+
+        if (lives <= 0) {
+            nextBtn.textContent = 'Lihat Hasil Akhir 📊';
+        } else if (currentIdx === questions.length - 1) {
+            nextBtn.textContent = 'Selesai & Lihat Skor 🏆';
+        } else {
+            nextBtn.textContent = 'Lanjut ke Soal Berikutnya ➡️';
+        }
+    }
+
+    function updateLives() {
+        healthEl.textContent = lives > 0 ? '❤️'.repeat(lives) : '💔';
+    }
+
+    function spawnParticles(emoji) {
+        for (let i = 0; i < 6; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.textContent = emoji;
+            p.style.left = (20 + Math.random() * 60) + '%';
+            p.style.top = '30%';
+            card.appendChild(p);
+            setTimeout(() => p.remove(), 1000);
+        }
+    }
+
+    function nextQuestion() {
+        if (lives <= 0 || currentIdx >= questions.length - 1) {
+            showFinalResult();
+        } else {
+            currentIdx++;
+            loadQuestion();
+        }
+    }
+
+    function showFinalResult() {
+        card.classList.remove('shake-anim', 'pop-anim');
+        let title = '';
+        let desc = '';
+
+        if (lives <= 0) {
+            avatarEl.textContent = '🪫';
+            title = 'Energi Fokus Habis!';
+            desc = `Skor akhir: ${score}. Kebiasaan main HP-mu masih sering mengganggu aktivitas penting. Yuk pelan-pelan kurangi screen time!`;
+        } else if (score >= 80) {
+            avatarEl.textContent = '🏆';
+            title = 'Master Detoks Digital!';
+            desc = `Skor akhir: ${score}/100! Kamu sudah sangat bijak mengatur waktu antara HP dan dunia nyata. Pertahankan!`;
+            spawnParticles('🎉');
+        } else {
+            avatarEl.textContent = '👍';
+            title = 'Cukup Bijak!';
+            desc = `Skor akhir: ${score}/100. Kamu sudah tahu mana yang baik, tinggal lebih konsisten lagi menjauhi godaan HP!`;
         }
 
-        function startGame() {
-            clearInterval(gameInterval);
-            clearInterval(moveInterval);
-            
-            score = 0;
-            timeLeft = 30;
-            isPlaying = true;
-            
-            scoreDisplay.textContent = score;
-            timeDisplay.textContent = timeLeft;
-            star.style.display = 'flex';
-            moveStar();
+        document.getElementById('quiz-content').innerHTML = `
+            <h2 style="text-align:center; color:#f8fafc; margin-bottom:10px;">${title}</h2>
+            <p style="text-align:center; color:#cbd5e1; font-size:14.5px; line-height:1.5; margin-bottom:20px;">${desc}</p>
+            <button class="next-btn" style="display:block;" onclick="restartQuiz()">Main Lagi 🔄</button>
+        `;
+    }
 
-            moveInterval = setInterval(moveStar, 900);
-            
-            gameInterval = setInterval(() => {
-                timeLeft--;
-                timeDisplay.textContent = timeLeft;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(gameInterval);
-                    clearInterval(moveInterval);
+    function restartQuiz() {
+        currentIdx = 0;
+        score = 0;
+        lives = 3;
+        scoreEl.textContent = score;
+        updateLives();
+        document.getElementById('quiz-content').innerHTML = `
+            <div class="question-text" id="question"></div>
+            <div class="options-list" id="options"></div>
+            <div class="consequence-box" id="consequence"></div>
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">Lanjut ➡️</button>
+        `;
+        // Re-bind elemen yang baru dibuat ulang
+        location.reload();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
