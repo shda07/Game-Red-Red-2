@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Game Catch the Star</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        h1 {
+            margin-bottom: 5px;
+            font-size: 24px;
+            color: #e94560;
+        }
+        #score-board {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        #game-area {
+            width: 320px;
+            height: 400px;
+            background-color: #16213e;
+            border: 3px solid #0f3460;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+        #star {
+            width: 40px;
+            height: 40px;
+            background-color: #ffd700;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            user-select: none;
+            transition: transform 0.1s;
+            box-shadow: 0 0 15px #ffd700;
+        }
+        #star:active {
+            transform: scale(0.85);
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #c7364f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tangkap Bintang!</h1>
+    <div id="score-board">Skor: <span id="score">0</span> | Waktu: <span id="time">30</span>s</div>
+    
+    <div id="game-area">
+        <div id="star" onclick="catchStar()">⭐</div>
+    </div>
+
+    <button onclick="startGame()">Mulai / Ulangi</button>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let gameInterval;
+        let moveInterval;
+        let isPlaying = false;
+
+        const star = document.getElementById('star');
+        const gameArea = document.getElementById('game-area');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+
+        function moveStar() {
+            const maxX = gameArea.clientWidth - star.clientWidth;
+            const maxY = gameArea.clientHeight - star.clientHeight;
+            
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+            
+            star.style.left = randomX + 'px';
+            star.style.top = randomY + 'px';
+        }
+
+        function catchStar() {
+            if (!isPlaying) return;
+            score++;
+            scoreDisplay.textContent = score;
+            moveStar();
+        }
+
+        function startGame() {
+            clearInterval(gameInterval);
+            clearInterval(moveInterval);
+            
+            score = 0;
+            timeLeft = 30;
+            isPlaying = true;
+            
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft;
+            star.style.display = 'flex';
+            moveStar();
+
+            moveInterval = setInterval(moveStar, 900);
+            
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(gameInterval);
+                    clearInterval(moveInterval);
